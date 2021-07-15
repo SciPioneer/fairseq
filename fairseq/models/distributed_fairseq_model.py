@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import inspect
+import os
 
 import torch
 import torch.distributed as dist
@@ -118,26 +119,36 @@ def DistributedFairseqModel(args, model, process_group):
     # Assume that:
     # ``args.distributed_wrapper`` is 'DDP' and ``args.ddp_backend`` is 'c10d'.
     
-    # 1) Register a FP16 compression communication hook. 
-    # ddp.register_comm_hook(state=process_group, hook=default.fp16_compress_hook)
-    
-    # 2) Register a PowerSGD communication hook:
+    comm_hook_type = os.getenv("COMM_HOOK_TYPE")
+    print(" =================================================== ")
+    if comm_hook_type is not None:
+        print("DDP communication hook {} is registered".format(comm_hook_type))
+    else:
+        print("No DDP communication hook is registered.")
+    print(" =================================================== ")
     state = powerSGD.PowerSGDState(
         process_group=process_group,
         matrix_approximation_rank=1,
-        start_powerSGD_iter=1_000,
+        start_powerSGD_iter=2,  # Use 1_000 if the perplexity becomes worse.
     )
-    ddp_model.register_comm_hook(state=state, hook=powerSGD.powerSGD_hook)
     
-    # 3) Register a FP16+PowerSGD communication hook:
-    """
-    state = powerSGD.PowerSGDState(
-        process_group=process_group,
-        matrix_approximation_rank=1,
-        start_powerSGD_iter=1_000,
-    )
-    ddp_model.register_comm_hook(state, default.fp16_compress_wrapper(powerSGD.powerSGD_hook))
-    """
+    # 1) Register a FP16 compression communication hook.
+    if comm_hook_type == "FP16_COMPRESS":
+        ddp.register_comm_hook(state=process_group, hook=default.fp16_compress_hook)
+    # 2) Register a PowerSGD communication hook.
+    elif comm_hook_type == "POWER_SGD"
+        ddp_model.register_comm_hook(state, hook=powerSGD.powerSGD_hook)    
+    # 3) Register a FP16+PowerSGD communication hook.
+    elif comm_hook_type == "FP16_POWER_SGD"
+        ddp_model.register_comm_hook(state, default.fp16_compress_wrapper(powerSGD.powerSGD_hook))
+    # 4) Register a BatchedPowerSGD communication hook.
+    elif comm_hook_type == "BATCHED_POWER_SGD"
+        ddp_model.register_comm_hook(state, hook=powerSGD.batched_powerSGD_hook)
+    # 4) Register a FP16+BatchedPowerSGD communication hook.
+    elif comm_hook_type == "FP16_BATCHED_POWER_SGD"
+        ddp_model.register_comm_hook(state, default.fp16_compress_wrapper(powerSGD.batched_powerSGD_hook))
+    elif comm_hook_type is not None:
+        raise ValueError("Unknown value of the environment variable COMM_HOOK_TYPE.")
     
     return ddp_model
 
