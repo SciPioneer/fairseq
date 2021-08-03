@@ -136,16 +136,16 @@ def DistributedFairseqModel(args, model, process_group):
     if comm_hook_type == "FP16_COMPRESS":
         ddp.register_comm_hook(state=process_group, hook=default.fp16_compress_hook)
     # 2) Register a PowerSGD communication hook.
-    elif comm_hook_type == "POWER_SGD"
+    elif comm_hook_type == "POWER_SGD":
         ddp_model.register_comm_hook(state, hook=powerSGD.powerSGD_hook)    
     # 3) Register a FP16+PowerSGD communication hook.
-    elif comm_hook_type == "FP16_POWER_SGD"
+    elif comm_hook_type == "FP16_POWER_SGD":
         ddp_model.register_comm_hook(state, default.fp16_compress_wrapper(powerSGD.powerSGD_hook))
     # 4) Register a BatchedPowerSGD communication hook.
-    elif comm_hook_type == "BATCHED_POWER_SGD"
+    elif comm_hook_type == "BATCHED_POWER_SGD":
         ddp_model.register_comm_hook(state, hook=powerSGD.batched_powerSGD_hook)
     # 4) Register a FP16+BatchedPowerSGD communication hook.
-    elif comm_hook_type == "FP16_BATCHED_POWER_SGD"
+    elif comm_hook_type == "FP16_BATCHED_POWER_SGD":
         ddp_model.register_comm_hook(state, default.fp16_compress_wrapper(powerSGD.batched_powerSGD_hook))
     elif comm_hook_type is not None:
         raise ValueError("Unknown value of the environment variable COMM_HOOK_TYPE.")
