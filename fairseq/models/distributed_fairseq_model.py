@@ -134,7 +134,7 @@ def DistributedFairseqModel(args, model, process_group):
     
     # 1) Register a FP16 compression communication hook.
     if comm_hook_type == "FP16_COMPRESS":
-        ddp.register_comm_hook(state=process_group, hook=default.fp16_compress_hook)
+        ddp_model.register_comm_hook(state=process_group, hook=default.fp16_compress_hook)
     # 2) Register a PowerSGD communication hook.
     elif comm_hook_type == "POWER_SGD":
         ddp_model.register_comm_hook(state, hook=powerSGD.powerSGD_hook)    
